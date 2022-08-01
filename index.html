@@ -19,25 +19,20 @@
   <script>
     let canvas = document.querySelector('canvas');
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-
+    let canvasWidth = window.innerWidth;
+    let canvasHeight = window.innerHeight;
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
     let ctx = canvas.getContext('2d');
-
-// First path
-ctx.beginPath();
-ctx.strokeStyle = 'blue';
-ctx.moveTo(20, 20);
-ctx.lineTo(200, 20);
-ctx.stroke();
-
-// Second path
-// ctx.beginPath();
-ctx.strokeStyle = 'green';
-ctx.moveTo(20, 20);
-ctx.lineTo(120, 120);
-ctx.stroke();
+    let img = document.createElement('img');
+    img.src = './image/bg_1_1.jpg';
+    img.onload = function(e) {
+      ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+    }
+    let i;
+    let audio = document.createElement('audio');
+    audio.src = './mp3/boom.mp3';
+    window.audio = audio;
   </script>
 </body>
 </html>
