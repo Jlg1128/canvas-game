@@ -16,6 +16,7 @@
 </style>
 <body>
   <canvas id="mainCanvas"></canvas>
+  <script src="./index.js"></script>
   <script>
     let canvas = document.querySelector('canvas');
 
@@ -23,28 +24,9 @@
     let canvasHeight = window.innerHeight;
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
-    let ctx = canvas.getContext('2d');
-    let img = document.createElement('img');
-    img.src = './image/bg_1_1.jpg';
-    img.onload = function(e) {
-      let sourceY = 0;
-      let speed = 3;
-      // ctx.drawImage(img, 0, 0, img.width, 400, 0, 0, canvasWidth, 400);
-      let flag = false;
-      function draw() {
-          sourceY -= speed;
-        if (sourceY  < -canvasHeight) {
-          sourceY = 0;
-        }
-        // first
-        ctx.drawImage(img, 0, 0, img.width, canvasHeight + sourceY, 0, -sourceY, canvasWidth, canvasHeight + sourceY);
-        // second
-        ctx.drawImage(img, 0, canvasHeight + sourceY, img.width, - sourceY, 0, 0, canvasWidth, - sourceY);
-        requestAnimationFrame(draw);
-      }
-      draw();
-    }
-    let i;
+    let game = new PlaneGame(canvas, window.innerWidth, window.innerHeight);
+    window.game = game;
+    console.log(game);
     let audio = document.createElement('audio');
     audio.src = './mp3/boom.mp3';
     window.audio = audio;
