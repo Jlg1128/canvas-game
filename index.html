@@ -16,6 +16,7 @@
 </style>
 <body>
   <canvas id="mainCanvas"></canvas>
+  <script src="./soundSystem.js"></script>
   <script src="./index.js"></script>
   <script>
     let canvas = document.querySelector('canvas');
@@ -26,10 +27,7 @@
     canvas.height = canvasHeight;
     let game = new PlaneGame(canvas, window.innerWidth, window.innerHeight);
     window.game = game;
-    console.log(game);
-    let audio = document.createElement('audio');
-    audio.src = './mp3/boom.mp3';
-    window.audio = audio;
+
   </script>
 </body>
 </html>
