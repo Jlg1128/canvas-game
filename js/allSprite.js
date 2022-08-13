@@ -389,7 +389,7 @@
     paint: function(sprite) {
       if (sprite.isgood) {
         var img = new Image();
-        img.src = '../planGame/image/plasma.png';
+        img.src = './image/plasma.png';
         ctx.drawImage(
           img,
           -missleWidth / 2 + 1,
@@ -483,7 +483,7 @@
   W.badPlanPainter = {
     paint: function(sprite) {
       var img = new Image();
-      img.src = '../planGame/image/ship.png';
+      img.src = './/image/ship.png';
       switch (sprite.badKind) {
         case 1:
           ctx.drawImage(
