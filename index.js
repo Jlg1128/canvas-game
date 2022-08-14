@@ -38,7 +38,7 @@ class PlaneGame {
       const signal = controller.signal;
       // bgm 必须要在user interact之后
       window.addEventListener('mousemove', () => {
-        // this.sound.bgm.play();
+        this.sound.bgm.play();
         controller.abort();
       }, {signal})
       // 开始游戏
@@ -69,7 +69,34 @@ class PlaneGame {
     this.drawGameBackGround();
     let {ctx, mainPlane, badPlanes} = this;
     mainPlane.draw();
-    badPlanes.forEach(badPlane => badPlane.draw())
+    badPlanes.forEach((badPlane) => {
+      if (badPlane.status !== 'destroyed') {
+        mainPlane.bullets.forEach(bullet => {
+          let testRes = badPlane.hitTest(bullet);
+          if (testRes) {
+            bullet.destroy();
+            badPlane.beAttacked();
+            console.log('坏飞机碰撞了', testRes);
+          }
+        })
+      }
+      if (mainPlane.status !== 'destroyed') {
+        let hitBadPlaneRes = mainPlane.hitTest(badPlane);
+        if (hitBadPlaneRes) {
+          mainPlane.beAttacked();
+          badPlane.beAttacked();
+        }
+        badPlane.bullets.forEach((bullet) => {
+          let testRes = mainPlane.hitTest(bullet);
+          if (testRes) {
+            bullet.destroy();
+            mainPlane.beAttacked();
+            console.log('碰撞了', testRes);
+          }
+        })
+      }
+      badPlane.draw();
+    });
     this.drawBloodBar(mainPlane.blood);
     this.drawRemainingBullets(mainPlane.bulletsCount);
     requestAnimationFrame(this.draw.bind(this));
@@ -88,36 +115,51 @@ class PlaneGame {
     ctx.drawImage(backGroundImg, 0, canvasHeight + backGroundBeginPostionY, backGroundImg.width, - backGroundBeginPostionY, 0, 0, canvasWidth, - backGroundBeginPostionY);
   }
 
-  hitTest() {
-
+  handleMoveKeydown(e) {
+    let key = e.key.toLowerCase();
+    let {mainPlane} = this;
+    if (mainPlane.status !== 'destroyed') {
+      if (key === 'a') {
+        mainPlane.moveMode['left'] = true;
+      } else if (key === 'd') {
+        mainPlane.moveMode['right'] = true;
+      } else if (key === 'w') {
+        mainPlane.moveMode['up'] = true;
+      } else if (key === 's') {
+        mainPlane.moveMode['down'] = true;
+      }
+    }
   }
 
-  handleMainPlaneMove(e) {
+  handleMoveKeyup(e) {
     let key = e.key.toLowerCase();
     let {mainPlane} = this;
     if (key === 'a') {
-      mainPlane.move('left');
+      mainPlane.moveMode['left'] = false;
     } else if (key === 'd') {
-      mainPlane.move('right');
+      mainPlane.moveMode['right'] = false;
     } else if (key === 'w') {
-      mainPlane.move('up');
+      mainPlane.moveMode['up'] = false;
     } else if (key === 's') {
-      mainPlane.move('down');
+      mainPlane.moveMode['down'] = false;
+    }
   }
-  }
-
   addMoveEvent() {
-    window.removeEventListener('keydown', this.handleMainPlaneMove)
-    window.addEventListener('keydown', this.handleMainPlaneMove.bind(this))
+    window.addEventListener('keydown', this.handleMoveKeydown.bind(this))
+    window.addEventListener('keyup', this.handleMoveKeyup.bind(this))
   }
 
   loadAssetsBeforeStart() {
     return new Promise(async (res, rej) => {
       let p1 = soundSystem.loadSound('bgm.mp3');
       let p2 = loadImage('bg_1_1.jpg');
-      this.mainPlane = new Plane(this.ctx, 100, 100, 'good', 1);
+      this.mainPlane = new Plane(this.ctx, 100, 100, 'good', 3);
       let loadPlane = this.mainPlane.load();
-      this.badPlanes = [new Plane(this.ctx, 200, 500, 'bad', 1)];
+      this.badPlanes = [];
+      for (let i = 0; i < 5; i++) {
+        let badPlane = new Plane(this.ctx, Math.random() * this.ctx.canvas.width, (this.ctx.canvas.height - 200) + 200 * Math.random(), 'bad', 0.01)
+        this.badPlanes.push(badPlane);
+      }
       let loadBadPlanes = this.badPlanes.map(badPlane => badPlane.load());
       Promise.all([p1, p2, loadPlane, loadBadPlanes]).then(([audio, backGroundImg, plane]) => {
         this.sound['bgm'] = audio;  

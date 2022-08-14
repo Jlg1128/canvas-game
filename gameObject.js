@@ -1,22 +1,26 @@
 class GameObjectBase {
   /**
    * @param {CanvasRenderingContext2D} ctx  - The shape is the same as SpecialType above
-   * @param {{x: number, y: number}} imageOffset   - The shape is the same as SpecialType above
    */
-  constructor(ctx, x, y, speed, imageOffset) {
+  constructor(ctx, x, y, speed) {
     this.ctx = ctx;
     this.x = x;
     this.y = y;
-    this.speed = speed || 5;
-    /** @type {'init' | 'destoryed'} */
+    this.speed = speed || 1;
+    /** @type {'init' | 'destroyed'} */
     this.status = 'init';
-    this.imageOffset = imageOffset || {x: 0, y: 0};
     this.loading = true;
-    this.init();
+    this.moveMode = {
+      'up': false,
+      'down': false,
+      'left': false,
+      'right': false,
+    };
   }
 
   init() {
-
+    this.status = 'init';
+    this.speed = 1;
   }
 
 
@@ -27,11 +31,11 @@ class GameObjectBase {
   }
 
   getY() {
-    return this.ctx.canvas.height - this.y ;
+    return this.ctx.canvas.height - this.y;
   }
 
-  destory() {
-    
+  destroy() {
+    this.status = 'destroyed';
   }
 
   move(direction) {
@@ -65,6 +69,15 @@ class GameObjectBase {
     } else {
       return false;
     }
+  }
+
+  // 碰撞检测
+  hitTest(otherSprite) {
+    var dis = Math.sqrt(Math.pow(this.x - otherSprite.x, 2) + Math.pow(this.getY() - otherSprite.getY(), 2));
+    if (dis < this.width / 2) {
+      return true;
+    }
+    return false;
   }
 
   draw() {

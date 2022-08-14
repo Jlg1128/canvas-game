@@ -3,9 +3,12 @@ class Plane extends GameObjectBase {
    * @param {CanvasRenderingContext2D} ctx  - The shape is the same as SpecialType above
    */
   constructor(ctx, x, y, type, speed) {
-    super(ctx, x, y);
+    super(ctx, x, y, speed);
     this.width = 24;
     this.height = 24;
+    /**
+    * @type {'init' | 'destroyed'}
+    */
     this.status = 'init';
     /**
     * @type {'fireInBurst' | '3-round' | 'strafe' | '万剑'} // 单发 三连发 扫射
@@ -19,27 +22,51 @@ class Plane extends GameObjectBase {
     this.bullets = [];
     /** @type {'good'|'bad'}*/
     this.type = type || 'good';
-    if (this.type === 'good') {
-      this.rotateRad = 0;
-    } else {
-      this.rotateRad = Math.PI;
-    }
+    this.init();
   }
 
-  init() {
-    this.attackSpeed = 1; // 攻速
+  init(x, y) {
     this.level = 1; // 等级
-    this.speed = 5; // 移速
-    this.blood = 5; // 五格血
     this.status = 'init';
+    if (this.type === 'bad') {
+      this.speed = 1.4;
+      this.blood = 1;
+      this.rotateRad = Math.PI;
+      this.attackSpeed = 3; // 攻速
+    } else {
+      this.speed = 3;
+      this.blood = 1;
+      this.rotateRad = 0;
+      this.attackSpeed = 20; // 攻速
+    }
+    if (x) {
+      this.x = x;
+    }
+    if (y) {
+      this.y = y;
+    }
     this.bulletsCount = 20;
+    this.boomAnimate = {
+      boomFrameCount: 14,
+      boomFrameIndex: 1,
+      width: 64,
+      height: 64,
+      position: {
+        x: 0,
+        y: 0
+      },
+      intervalFrameIndex: 1,
+      intervalFrameCount: 2, // 每两帧执行一次 500ms / 14 / 16.6
+    }
+    this.burstMode = 'fireInBurst';
+    this.bulletsCount = 100000;
   }
   
   // 受到攻击
   beAttacked() {
     this.blood--;
     if (this.blood <= 0) {
-      this.destory();
+      this.destroy(true);
     }
   }
 
@@ -58,6 +85,9 @@ class Plane extends GameObjectBase {
 
   // 换弹
   reloadMagazine() {
+    if (this.status === 'destroyed') {
+      return;
+    }
     let bulletsCount = 0;
     switch (this.burstMode) {
       case 'fireInBurst':
@@ -87,32 +117,49 @@ class Plane extends GameObjectBase {
 
   // 装弹
   loadBullets(count = 1) {
-    this.bullets = this.bullets.filter(item => item.status !== 'destoryed');
+    this.bullets = this.bullets.filter(item => item.status !== 'destroyed');
     let center = Math.floor(count / 2);
-    console.log(center);
     for (let i = 0; i < count; i++) {
       let rad = (i - center) * 10 * Math.PI / 180 + this.rotateRad;
-      this.bullets.push(new Bullet(this.ctx, this.x, this.getY(), 10, rad));
+      this.bullets.push(new Bullet(this.ctx, this.x, this.y, this.attackSpeed, rad, this.type));
     }
     return Promise.all(this.bullets.map(item => item.load()));
   }
 
   load() {
     return new Promise((resolve) => {
-      let promiseArr = [loadImage('ship.png')];
-      Promise.all([loadImage('ship.png'), this.reloadMagazine()])
-      .then(([plane]) => {
+      Promise.all([loadImage('ship.png'), loadImage('explosion.png'), this.reloadMagazine()])
+      .then(([plane, explosionImage]) => {
         this.image = plane;
+        this.explosionImage = explosionImage;
         this.loading = false;
         resolve(true);
         setInterval(() => {
           this.reloadMagazine();
-        }, 1 / this.attackSpeed * 1000);
+        }, 1 / this.attackSpeed * 5000);
       })
     })
   }
 
-  move(direction) {
+  setBadPlaneMoveMode() {
+    let y = this.getY();
+    let x = this.x;
+    let canvas = this.ctx.canvas;
+    this.moveMode['down'] = true;
+    if (x + this.width / 2 >= canvas.width ) {
+      this.moveMode.left = true;
+      this.moveMode.right = false;
+    } else if (x - this.width / 2 < 0) {
+      this.moveMode.right = true;
+      this.moveMode.left = false;
+    } else if (!this.moveMode.right && !this.moveMode.left) {
+      let flag = Math.round(Math.random()) === 1;
+      this.moveMode.right = flag;
+      this.moveMode.left = !flag;
+    }
+  }
+
+  move(direction, hasLimit) {
     let {speed, ctx: {canvas}} = this;
     switch (direction) {
       case 'left':
@@ -130,61 +177,106 @@ class Plane extends GameObjectBase {
       default:
         break;
     }
-    if (this.x <= 0) this.x = 0;
-    if (this.x >= canvas.width - this.width) this.x = canvas.width - this.width;
-    if (this.y <= 0) this.y = 0;
-    if (this.y >= canvas.height - this.height) this.y = canvas.height - this.height;
+    if (hasLimit) {
+      if (this.x <= this.width / 2) this.x = this.width / 2;
+      if (this.x >= canvas.width - this.width / 2) this.x = canvas.width - this.width / 2;
+      if (this.y <= this.height / 2) this.y = this.height / 2;
+      if (this.y >= canvas.height - this.height / 2) this.y = canvas.height - this.height / 2;
+    }
+    if (this.outOfRange()) {
+      this.destroy();
+    }
   }
 
   draw() {
-    let planePosition = {x: this.x, y: this.y};
-    let sourceX;
-    if (this.type === 'bad') {
-      sourceX = (this.level - 1 + 4) * 24;
-    } else if (this.type === 'good') {
-      sourceX = (this.level - 1) * 24;
-    }
-    let sourceY = 0;
-    let planePositionX = planePosition.x;
-    let planePositionY = this.getY();
-    let plane = this.image;
-    if (this.blood <= 0) {
-      return;
-    }
     if (!this.loading) {
-      this.ctx.save();
-      this.ctx.translate(planePositionX, planePositionY);
-      this.ctx.rotate(this.rotateRad);
-      // this.ctx.drawImage(
-      //   image,
-      //   -this.width / 2 + 1,
-      //   -this.height / 2,
-      //   this.width * this.scale,
-      //   this.height * this.scale,
-      // );
-      this.ctx.drawImage(plane, sourceX, sourceY, this.width, this.width, -this.width / 2, -this.height / 2, this.width, this.height);
-      // this.ctx.drawImage(plane, sourceX, sourceY, 24, 24, 0, 0, this.width, this.height);
-      this.ctx.restore();
+      if (this.status === 'destroyed') {
+        this.boom(this.x, this.getY());
+      } else {
+        let sourceX;
+        if (this.type === 'bad') {
+          sourceX = (this.level - 1 + 4) * 24;
+          this.setBadPlaneMoveMode();
+        } else if (this.type === 'good') {
+          sourceX = (this.level - 1) * 24;
+        }
+        Object.keys(this.moveMode).forEach(direction => {
+          this.moveMode[direction] && this.move(direction, this.type === 'good');
+        })
+        let sourceY = 0;
+        let plane = this.image;
+        this.ctx.save();
+        this.ctx.translate(this.x, this.getY());
+        this.ctx.rotate(this.rotateRad);
+        if (window.ed) {
+          this.ctx.fillStyle = 'red';
+          this.ctx.fillRect(0, 0, this.width, this.height)
+        }
+        this.ctx.drawImage(plane, sourceX, sourceY, this.width, this.height, -this.width / 2, -this.height / 2, this.width, this.height);
+        this.ctx.restore();
+      }
       this.bullets.forEach(bullet => {
-        // if (bullet.status !== 'destoryed') {
-          bullet.draw();
-        // }
+        bullet.draw();
       });
     }
   }
 
-  destory() {
+  boom(x, y, firstEnter) {
+    if (firstEnter) {
+      let p1 = soundSystem.loadSound('boom.mp3');
+      p1.then(audio => {
+        audio.play();
+      });
+    }
+    let {
+      boomFrameCount,
+      boomFrameIndex,
+      width: imageWidth,
+      height: imageHeight,
+      intervalFrameIndex,
+      intervalFrameCount,
+    } = this.boomAnimate;
 
+    let {explosionImage} = this;
+    if (boomFrameIndex > boomFrameCount) {
+      return;
+    }
+    if (intervalFrameIndex !== 1 && intervalFrameIndex < intervalFrameCount) {
+      this.boomAnimate.intervalFrameIndex += 1;
+      return;
+    } else if (intervalFrameIndex >= intervalFrameCount) {
+      this.boomAnimate.intervalFrameIndex = 1;
+    }
+    this.boomAnimate.boomFrameIndex ++;
+    this.boomAnimate.intervalFrameIndex += 1;
+    let sourceX = (boomFrameIndex - 1) * imageWidth;
+
+    let sourceY = 0;
+    this.ctx.drawImage(explosionImage, sourceX, sourceY, imageWidth, imageHeight, x - imageWidth / 2, y -imageHeight / 2, imageWidth, imageHeight);
+  }
+  destroy(beAttacked) {
+    this.status = 'destroyed';
+    if (beAttacked) {
+      this.boom(this.x, this.getY(), true);
+    }
+    setTimeout(() => {
+      if (this.type === 'good') {
+        this.init(); // reburn
+      } else {
+        this.init(Math.random() * this.ctx.canvas.width, (this.ctx.canvas.height - 200) + 200 * Math.random());
+      }
+    }, 1000);
   }
 }
 
 class Bullet extends GameObjectBase {
-  constructor(ctx, x, y, speed, rotateRad) {
+  constructor(ctx, x, y, speed, rotateRad, source) {
     super(...arguments);
     this.width = 70;
     this.height = 70;
     this.rotateRad = rotateRad;
     this.scale = 1;
+    this.type = source;
     this.init();
   }
 
@@ -204,11 +296,14 @@ class Bullet extends GameObjectBase {
   draw() {
     let image = this.image;
 
-    if (!this.loading) {
+    if (!this.loading && this.status !== 'destroyed') {
       this.ctx.save();
-      this.ctx.translate(this.x, this.y);
+      this.ctx.translate(this.x, this.getY());
       this.ctx.rotate(this.rotateRad);
-      // this.ctx.drawImage(image, 40, 40, this.width, this.height, this.x, this.y, this.width * scale, this.height * scale);
+      if (window.ed) {
+        this.ctx.fillStyle = 'red';
+        this.ctx.fillRect(0, 0, this.width * this.scale, this.height * this.scale)
+      }
       this.ctx.drawImage(
         image,
         -this.width / 2 + 1,
@@ -225,9 +320,9 @@ class Bullet extends GameObjectBase {
     let offsetY = -Math.cos(this.rotateRad) * this.speed;
     let offsetX = Math.sin(this.rotateRad) * this.speed;
     this.x += offsetX;
-    this.y += offsetY;
+    this.y -= offsetY;
     if (this.outOfRange()) {
-      this.status = 'destoryed';
+      this.status = 'destroyed';
     }
   }
 }
