@@ -13,24 +13,57 @@
   canvas {
     display: block;
   }
+  .gameWrapper {
+
+  }
+  .statistics {
+    position: absolute;
+    top: 2vh;
+    left: 5vw;
+  }
+  .statistics-inner {
+    position: relative;
+  }
+  .statistics-common {
+    color: white;
+    font-size: 20px;
+  }
+  .blood {
+    
+  }
+  .score {
+
+  }
+  .level {
+
+  }
 </style>
 <body>
-  <canvas id="mainCanvas"></canvas>
+  <div class="gameWrapper">
+    <canvas id="mainCanvas"></canvas>
+    <div class="statistics">
+      <div class="statistics-inner">
+        <div class="statistics-common statistics-blood">生命值：未知</div>
+        <div class="statistics-common statistics-score">得分：0</div>
+        <div class="statistics-common statistics-level">等级：1</div>
+        <div class="statistics-common statistics-burstMode">射击模式：单发</div>
+      </div>
+    </div>
+  </div>
   <script src="./gameObject.js"></script>
   <script src="./util.js"></script>
   <script src="./plane.js"></script>
+  <script src="./levelUp.js"></script>
   <script src="./soundSystem.js"></script>
   <script src="./index.js"></script>
   <script>
     let canvas = document.querySelector('canvas');
-
     let canvasWidth = window.innerWidth;
     let canvasHeight = window.innerHeight;
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
     let game = new PlaneGame(canvas, window.innerWidth, window.innerHeight);
     window.game = game;
-
   </script>
 </body>
 </html>

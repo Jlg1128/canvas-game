@@ -29,10 +29,10 @@ class Plane extends GameObjectBase {
     this.level = 1; // 等级
     this.status = 'init';
     if (this.type === 'bad') {
-      this.speed = 1.4;
+      this.speed = 3;
       this.blood = 1;
       this.rotateRad = Math.PI;
-      this.attackSpeed = 3; // 攻速
+      this.attackSpeed = 6; // 攻速
     } else {
       this.speed = 3;
       this.blood = 1;
@@ -63,24 +63,30 @@ class Plane extends GameObjectBase {
   }
   
   // 受到攻击
-  beAttacked() {
+  beAttacked(destroyedCb) {
     this.blood--;
     if (this.blood <= 0) {
+      destroyedCb && destroyedCb();
       this.destroy(true);
     }
   }
 
   levelUp() {
     this.level ++;
-    if (this.level === 2 || this.level === 3) {
-      this.burstMode = '3-round'
-    } else if (this.level < 7) {
-      this.burstMode = 'strafe';
-    } else {
-      this.burstMode = '万剑';
+    if (this.type === 'good') {
+      if (this.level < 3) {
+        this.burstMode = 'fireInBurst'
+      }
+      else if (this.level >= 3 && this.level <= 7) {
+        this.burstMode = '3-round'
+      } else if (this.level < 10) {
+        this.burstMode = 'strafe';
+      } else {
+        this.burstMode = '万剑';
+      }
     }
     this.attackSpeed += 1;
-    this.speed += 10;
+    this.speed += 1;
   }
 
   // 换弹
@@ -324,5 +330,9 @@ class Bullet extends GameObjectBase {
     if (this.outOfRange()) {
       this.status = 'destroyed';
     }
+  }
+
+  hitCallback() {
+    this.destroy();
   }
 }

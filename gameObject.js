@@ -73,14 +73,40 @@ class GameObjectBase {
 
   // 碰撞检测
   hitTest(otherSprite) {
+    if (otherSprite.status === 'destroyed') {
+      return false;
+    }
     var dis = Math.sqrt(Math.pow(this.x - otherSprite.x, 2) + Math.pow(this.getY() - otherSprite.getY(), 2));
     if (dis < this.width / 2) {
+      this.hitCallback();
+      otherSprite.hitCallback();
       return true;
     }
     return false;
   }
 
-  draw() {
+  // 碰撞之后的回调
+  hitCallback() {
+    
+  }
 
+  draw() {
+    this.intervalFrameIndex++;
+    if (this.intervalFrameIndex >= this.intervalFrameCount) {
+
+    }
+  }
+
+  // 设置展示间隔 interval：间隔时长（分钟）
+  setDrawInterval(interval = 0, isRandom = true) {
+    if (isRandom) {
+      this.intervalFrameCount = (Math.random() + 0.5) * interval * 10 * 1000 / 16.6;
+    } else {
+      this.intervalFrameCount = interval * 10 * 1000 / 16.6;
+    }
+    this.intervalFrameIndex = 0;
+  }
+  resetDrawInterval() {
+    this.intervalFrameIndex = 0;
   }
 }
