@@ -77,9 +77,9 @@ class Plane extends GameObjectBase {
       if (this.level < 3) {
         this.burstMode = 'fireInBurst'
       }
-      else if (this.level >= 3 && this.level <= 7) {
+      else if (this.level >= 3 && this.level <= 6) {
         this.burstMode = '3-round'
-      } else if (this.level < 10) {
+      } else if (this.level <= 9) {
         this.burstMode = 'strafe';
       } else {
         this.burstMode = '万剑';
@@ -201,10 +201,10 @@ class Plane extends GameObjectBase {
       } else {
         let sourceX;
         if (this.type === 'bad') {
-          sourceX = (this.level - 1 + 4) * 24;
+          sourceX = Math.min((this.level - 1 + 4) * 24, 144) ;
           this.setBadPlaneMoveMode();
         } else if (this.type === 'good') {
-          sourceX = (this.level - 1) * 24;
+          sourceX = Math.min((this.level - 1) * 24, 144) ;
         }
         Object.keys(this.moveMode).forEach(direction => {
           this.moveMode[direction] && this.move(direction, this.type === 'good');
@@ -216,7 +216,7 @@ class Plane extends GameObjectBase {
         this.ctx.rotate(this.rotateRad);
         if (window.ed) {
           this.ctx.fillStyle = 'red';
-          this.ctx.fillRect(0, 0, this.width, this.height)
+          this.ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height)
         }
         this.ctx.drawImage(plane, sourceX, sourceY, this.width, this.height, -this.width / 2, -this.height / 2, this.width, this.height);
         this.ctx.restore();
@@ -308,7 +308,7 @@ class Bullet extends GameObjectBase {
       this.ctx.rotate(this.rotateRad);
       if (window.ed) {
         this.ctx.fillStyle = 'red';
-        this.ctx.fillRect(0, 0, this.width * this.scale, this.height * this.scale)
+        this.ctx.fillRect(-this.width / 2 + 1, -this.height / 2, this.width * this.scale, this.height * this.scale)
       }
       this.ctx.drawImage(
         image,

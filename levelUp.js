@@ -8,7 +8,8 @@ class LevelUp extends GameObjectBase {
       'right': false,
     };
     this.init(x, y);
-    this.width = 50;
+    this.width = 40;
+    this.height = 15;
   }
 
   init(x, y) {
@@ -41,6 +42,20 @@ class LevelUp extends GameObjectBase {
     if (this.outOfRange()) {
       this.destroy();
     }
+  }
+
+  // 碰撞检测
+  hitTest(otherSprite) {
+    if (otherSprite.status === 'destroyed') {
+      return false;
+    }
+    var dis = Math.sqrt(Math.pow(this.x - otherSprite.x, 2) + Math.pow(this.getY() - otherSprite.getY(), 2));
+    if (dis < (this.width * 0.5 / 2 + otherSprite.width / 2)) {
+      this.hitCallback();
+      otherSprite.hitCallback();
+      return true;
+    }
+    return false;
   }
 
   hitCallback() {
