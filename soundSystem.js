@@ -5,7 +5,6 @@ class SoundSystem {
   }
   loadSound(assetUrl) {
     if (this.cache[assetUrl] && !this.cache[assetUrl].ended) {
-      this.cache[assetUrl].currentTime = 0
       return Promise.resolve(this.cache[assetUrl]);
     }
     return new Promise((res, rej) => {

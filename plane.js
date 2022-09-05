@@ -231,6 +231,9 @@ class Plane extends GameObjectBase {
     if (firstEnter) {
       let p1 = soundSystem.loadSound('boom.mp3');
       p1.then(audio => {
+        if (!audio.paused) {
+          audio.currentTime = 0
+        }
         audio.play();
       });
     }
